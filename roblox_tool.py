@@ -532,7 +532,15 @@ def perform_replace(config, exe_path, silent=False, override_mode=None):
 
 def clear_logs(config, silent=False):
     base = config.get("roblox_logs_path", "")
-    result = {"removed_files": 0, "removed_dirs": 0, "errors": [], "code": OK}
+    result = {
+        "removed_files": 0,
+        "removed_dirs": 0,
+        "errors": [],
+        "code": OK,
+        "skipped_in_use": 0,
+        "skipped_other": 0,
+        "skipped_in_use_samples": [],
+    }
     try:
         if not os.path.isdir(base):
             if not silent:
@@ -554,7 +562,14 @@ def clear_logs(config, silent=False):
                     os.remove(fp)
                     result["removed_files"] += 1
                 except Exception as e:
-                    result["errors"].append(str(e))
+                    msg = str(e)
+                    if "WinError 32" in msg or "being used by another process" in msg:
+                        result["skipped_in_use"] += 1
+                        if len(result["skipped_in_use_samples"]) < 5:
+                            result["skipped_in_use_samples"].append(fp)
+                    else:
+                        result["errors"].append(msg)
+                        result["skipped_other"] += 1
             for d in dirs:
                 dp = os.path.join(root, d)
                 try:
@@ -563,8 +578,11 @@ def clear_logs(config, silent=False):
                 except OSError:
                     pass
         if not silent:
+            extra = ""
+            if result["skipped_in_use"] or result["skipped_other"]:
+                extra = f" (in-use skipped={result['skipped_in_use']} other skipped={result['skipped_other']})"
             print(
-                f"Logs cleared: files={result['removed_files']} dirs={result['removed_dirs']}"
+                f"Logs cleared: files={result['removed_files']} dirs={result['removed_dirs']}{extra}"
             )
     except Exception as e:
         result["errors"].append(str(e))
@@ -842,6 +860,18 @@ def interactive_menu(config):
                         l_lines.append(
                             f"Files Removed: {log_stat.get('removed_files',0)}  Dirs Removed: {log_stat.get('removed_dirs',0)}  Errors: {len(log_stat.get('errors',[]))}"
                         )
+                        siu = log_stat.get("skipped_in_use", 0)
+                        sio = log_stat.get("skipped_other", 0)
+                        if siu or sio:
+                            l_lines.append(
+                                f"Skipped In-Use: {siu}  Skipped Other: {sio}"
+                            )
+                        samples = log_stat.get("skipped_in_use_samples") or []
+                        if samples:
+                            l_lines.append(
+                                "In-Use Samples: "
+                                + "; ".join(os.path.basename(p) for p in samples)
+                            )
                         if log_stat.get("errors"):
                             l_lines.append(
                                 "Errors Detail: "
