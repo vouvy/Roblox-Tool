@@ -1,0 +1,59 @@
+# ------------------------------
+# Python / General
+# ------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.env/
+.venv/
+venv/
+ENV/
+env/
+
+# Distribution / build
+build/
+dist/
+wheelhouse/
+*.egg-info/
+.eggs/
+*.egg
+
+# Installer / temp artifacts
+python-installer.exe
+*.tmp
+*.log
+*.bak
+~$*
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Cache
+.cache/
+.pytest_cache/
+.mypy_cache/
+
+# Local config overrides (allow main config.json tracked if desired)
+config.local.json
+
+# Generated reports
+coverage.xml
+htmlcov/
+
+# Logs (if any future logging added)
+logs/
+
+# Binary dumps
+*.bin
+
+# Batch secondary minimal runner (if created dynamically)
+run_minimal_generated.bat
