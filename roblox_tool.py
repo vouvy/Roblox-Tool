@@ -9,6 +9,7 @@ DEFAULTS = {
     "roblox_logs_path": os.path.expandvars(r"%localappdata%\\Roblox\\logs"),
     "roblox_api_url": "https://clientsettings.roblox.com/v2/client-version/WindowsPlayer",
     "target_process": "RobloxPlayerBeta.exe",
+    "extra_target_processes": ["RobloxCrashHandler.exe"],
     "bin_path": BIN_DIR,
     "loop_delay_seconds": 5,
     "loop_reselect_exe_each_run": False,
@@ -197,11 +198,23 @@ def kill_process(name):
     return killed
 
 
+def kill_processes(names):
+    any_killed = False
+    for n in names:
+        if kill_process(n):
+            any_killed = True
+    return any_killed
+
+
 def is_process_running(name):
     for proc in psutil.process_iter(["name"]):
         if proc.info["name"] and proc.info["name"].lower() == name.lower():
             return True
     return False
+
+
+def any_process_running(names):
+    return any(is_process_running(n) for n in names)
 
 
 def file_hash(path):
@@ -489,13 +502,16 @@ def perform_replace(config, exe_path, silent=False, override_mode=None):
             except Exception:
                 pass
         pk_mode = status["process_kill_mode"]
+        primary = config.get("target_process")
+        extra = config.get("extra_target_processes", []) or []
+        proc_list = [p for p in [primary] + list(extra) if p]
         if pk_mode == "always":
-            if is_process_running(config["target_process"]):
-                status["process_killed"] = kill_process(config["target_process"])
+            if any_process_running(proc_list):
+                status["process_killed"] = kill_processes(proc_list)
                 time.sleep(0.3)
         elif pk_mode == "if_needed":
-            if need_replace and is_process_running(config["target_process"]):
-                status["process_killed"] = kill_process(config["target_process"])
+            if need_replace and any_process_running(proc_list):
+                status["process_killed"] = kill_processes(proc_list)
                 time.sleep(0.3)
         elif pk_mode == "never":
             pass
