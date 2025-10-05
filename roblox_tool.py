@@ -11,7 +11,7 @@ DEFAULTS = {
     "target_process": "RobloxPlayerBeta.exe",
     "extra_target_processes": ["RobloxCrashHandler.exe"],
     "bin_path": BIN_DIR,
-    "loop_delay_seconds": 5,
+    "loop_delay_seconds": 3600,
     "loop_reselect_exe_each_run": False,
     "selected_actions": ["replace", "logs"],
     "last_selected_exe": "",
@@ -58,10 +58,13 @@ def load_config():
             data[k] = v
             changed = True
 
+    raw_delay_val = data.get("loop_delay_seconds", DEFAULTS["loop_delay_seconds"])
     try:
-        delay = int(data.get("loop_delay_seconds", 5))
+        delay = int(raw_delay_val)
     except (TypeError, ValueError):
-        delay = 5
+        delay = DEFAULTS["loop_delay_seconds"]
+    if delay == 5:
+        delay = DEFAULTS["loop_delay_seconds"]
     delay = max(MIN_LOOP_DELAY, min(MAX_LOOP_DELAY, delay))
     if data.get("loop_delay_seconds") != delay:
         data["loop_delay_seconds"] = delay
